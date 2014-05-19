@@ -6,11 +6,20 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <dashboard:Dial360 Grid.Row="1" Width="200px" Height="200px" />
-        <dashboard:Dial360 Grid.Row="0" />
+        <dashboard:Dial360 Grid.Row="0"
+                           Minimum="{Binding Min}"
+                           Maximum="{Binding Max}"
+                           Value="{Binding Value}"
+                           Label="{Binding LabelValue}" />
+        
+        <dashboard:Dial360 Grid.Row="1" Width="200px" Height="200px" 
+                           Minimum="{Binding Min}"
+                           Maximum="{Binding Max}"
+                           Value="{Binding Value}"
+                           Label="{Binding LabelValue}" />
 
     </Grid>
 </Window>
