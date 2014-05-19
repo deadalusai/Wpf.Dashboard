@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Timers;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Dashboard.Test.Annotations;
@@ -23,7 +24,11 @@ namespace Dashboard.Test
             ViewModel = new DialViewModel {
                 Max = 100,
                 Min = 50,
-                Value = 75
+                Value = 75,
+                Notches = {
+                    new Dial360Notch(label: "A", angle: -150),
+                    new Dial360Notch(label: "B", angle: 150)
+                }
             };
 
             _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.ApplicationIdle, OnTick, Dispatcher);
@@ -31,9 +36,24 @@ namespace Dashboard.Test
             Loaded += OnLoaded;
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        private async void OnLoaded(object sender, RoutedEventArgs e)
         {
             _timer.Start();
+
+            await Task.Delay(2000);
+
+            //Test altering the Notches collection
+            ViewModel.Notches.Add(new Dial360Notch(label: "C", angle: 0));
+
+            await Task.Delay(2000);
+
+            //Test swapping the Notches collection
+            ViewModel.Notches = new ObservableCollection<Dial360Notch> {
+                
+                new Dial360Notch(label: "First", angle: -100),
+                new Dial360Notch(label: "Last", angle: 100)
+
+            };
         }
 
         private void OnTick(object sender, EventArgs e)
@@ -60,6 +80,7 @@ namespace Dashboard.Test
         private double _value;
         private double _max;
         private double _min;
+        private ObservableCollection<Dial360Notch> _notches = new ObservableCollection<Dial360Notch>();
 
         public double Min
         {
@@ -98,6 +119,17 @@ namespace Dashboard.Test
         public string LabelValue
         {
             get { return (Math.Round(Value)).ToString(CultureInfo.InvariantCulture); }
+        }
+
+        public ObservableCollection<Dial360Notch> Notches
+        {
+            get { return _notches; }
+            set
+            {
+                if (Equals(value, _notches)) return;
+                _notches = value;
+                OnPropertyChanged();
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
@@ -12,6 +13,14 @@ namespace Dashboard
 {
     public class Dial360Notch
     {
+        public Dial360Notch() { }
+
+        public Dial360Notch(string label, double angle)
+        {
+            Label = label;
+            Angle = angle;
+        }
+
         public string Label { get; set; }
 
         public double Angle { get; set; }
@@ -73,8 +82,19 @@ namespace Dashboard
         {
             var instance = (Dial360)d;
 
-            instance.CleanUpCollectionMonitoring();
-            instance.SetUpCollectionMonitoring();
+            //Unhook the old notch collection
+            var oldNotches = e.OldValue as IEnumerable<Dial360Notch>;
+            if (oldNotches != null)
+            {
+                instance.StopMonitoringNotchCollection(oldNotches);
+            }
+
+            //And hook up the new one!
+            var newNotches = e.NewValue as IEnumerable<Dial360Notch>;
+            if (newNotches != null)
+            {
+                instance.StartMonitoringNotchCollection(newNotches);
+            }
 
             NotchDisplayPropertyChanged(d, e);
         }
@@ -108,7 +128,7 @@ namespace Dashboard
 
         private void ElementUnloaded(object sender, RoutedEventArgs e)
         {
-            CleanUpCollectionMonitoring();
+            StopMonitoringNotchCollection(Notches);
         }
 
         private void ElementLoaded(object sender, RoutedEventArgs e)
@@ -120,6 +140,24 @@ namespace Dashboard
         private void NotchesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             RebuildDial();
+        }
+
+        private void StartMonitoringNotchCollection(IEnumerable<Dial360Notch> notches)
+        {
+            var notifiable = notches as INotifyCollectionChanged;
+            if (notifiable != null)
+            {
+                notifiable.CollectionChanged += NotchesCollectionChanged;
+            }
+        }
+
+        private void StopMonitoringNotchCollection(IEnumerable<Dial360Notch> notches)
+        {
+            var notifiable = notches as INotifyCollectionChanged;
+            if (notifiable != null)
+            {
+                notifiable.CollectionChanged -= NotchesCollectionChanged;
+            }
         }
 
         private void RebuildDial()
@@ -154,24 +192,6 @@ namespace Dashboard
                 _maxAngle = angles.Max();
 
                 DialPoints.ItemsSource = Notches;
-            }
-        }
-
-        private void SetUpCollectionMonitoring()
-        {
-            var notifiable = Notches as INotifyCollectionChanged;
-            if (notifiable != null)
-            {
-                notifiable.CollectionChanged += NotchesCollectionChanged;
-            }
-        }
-
-        private void CleanUpCollectionMonitoring()
-        {
-            var notifiable = Notches as INotifyCollectionChanged;
-            if (notifiable != null)
-            {
-                notifiable.CollectionChanged -= NotchesCollectionChanged;
             }
         }
 

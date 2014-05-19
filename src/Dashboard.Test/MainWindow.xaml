@@ -13,7 +13,8 @@
                            Minimum="{Binding Min}"
                            Maximum="{Binding Max}"
                            Value="{Binding Value}"
-                           Label="{Binding LabelValue}" />
+                           Label="{Binding LabelValue}"
+                           Notches="{Binding Notches}" />
         
         <dashboard:Dial360 Grid.Row="1" Width="200px" Height="200px" 
                            Minimum="{Binding Min}"
