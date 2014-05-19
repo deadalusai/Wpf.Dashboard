@@ -9,7 +9,7 @@
         <Grid x:Name="LayoutRoot" Width="160" Height="160">
             <Grid.Resources>
                 <Storyboard x:Key="NeedleAnimation">
-                    <DoubleAnimation Storyboard.TargetName="NeedleAssembly" 
+                    <DoubleAnimation Storyboard.TargetName="NeedleAssembly"
                                      Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
                                      From="-150" To="-150" Duration="00:00:00.75">
                         <DoubleAnimation.EasingFunction>

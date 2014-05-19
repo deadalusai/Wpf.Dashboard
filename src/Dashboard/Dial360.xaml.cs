@@ -14,7 +14,7 @@ namespace Dashboard
     {
         public string Label { get; set; }
 
-        public int Angle { get; set; }
+        public double Angle { get; set; }
     }
 
     /// <summary>
@@ -83,13 +83,13 @@ namespace Dashboard
         {
         }
 
-        private const int DEFAULT_MIN_ANGLE = -150, DEFAULT_MAX_ANGLE = 150;
+        private const double DEFAULT_MIN_ANGLE = -150, DEFAULT_MAX_ANGLE = 150;
 
         private readonly Storyboard _needleStoryboard;
         private readonly DoubleAnimation _needleAnimation;
         private readonly RotateTransform _needleTransform;
 
-        private int _minAngle = DEFAULT_MIN_ANGLE, _maxAngle = DEFAULT_MAX_ANGLE;
+        private double _minAngle = DEFAULT_MIN_ANGLE, _maxAngle = DEFAULT_MAX_ANGLE;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Dial360"/> class.
@@ -131,7 +131,7 @@ namespace Dashboard
                 _maxAngle = DEFAULT_MAX_ANGLE;
 
                 int spaces = (DefaultNotchCount - 1);
-                int notchSpacing = (_maxAngle - _minAngle) / spaces;
+                double notchSpacing = (_maxAngle - _minAngle) / spaces;
 
                 double realMin = RealMinimum, realMax = RealMaximum;
 
@@ -196,7 +196,7 @@ namespace Dashboard
         }
 
         /// <summary>
-        /// Gets or sets the Minimum value the gauge will accept, values lower than this are raised to this
+        /// Gets or sets the Minimum value the gauge will accept, values lower than this are clamped to this.
         /// </summary>
         public double Minimum
         {
@@ -205,7 +205,7 @@ namespace Dashboard
         }
 
         /// <summary>
-        /// Gets or sets the maximum value the gauge will accept. Values above this are rounded down
+        /// Gets or sets the maximum value the gauge will accept. Values above this are clamped to this.
         /// </summary>
         public double Maximum
         {
@@ -242,8 +242,7 @@ namespace Dashboard
         }
 
         /// <summary>
-        /// Gets the RealMinimum value. Since the user may set Minimum &gt; Maximum, we internally use RealMinimum
-        /// and RealMaximum which allways return Maximum &gt;= Minimum even if they have to swap
+        /// Gets the RealMinimum value. Since the user may set Minimum &gt; Maximum, we internally use RealMaximum which returns the largest of the two values.
         /// </summary>
         internal double RealMaximum
         {
@@ -251,8 +250,7 @@ namespace Dashboard
         }
 
         /// <summary>
-        /// Gets the RealMaximum valueSince the user may set Minimum &gt; Maximum, we internally use RealMinimum
-        /// and RealMaximum which always return Maximum &gt;= Minimum even if they have to swap
+        /// Gets the RealMaximum value. Since the user may set Minimum &gt; Maximum, we internally use RealMinimum which returns the smallest of the two values
         /// </summary>
         internal double RealMinimum
         {
@@ -260,39 +258,35 @@ namespace Dashboard
         }
 
         /// <summary>
-        /// Gets the NormalizedValue. Regardless of the Minimum or Maximum settings, the actual value to display on the gauge
-        /// is represented by the Normalized value which always is in the range 0 &gt;= n &lt;= 1.0. This makes
-        /// the job of animating easier. Also clamps the actual value to the maximum and minimum.
+        /// Gets a normalized Value which is clamped to Minimum and Maximum and then moved into the range 0.0 &lt;= n &lt;= 1.0.
         /// </summary>
         internal double NormalizedValue
         {
             get
             {
-                double realValue = (Value - RealMinimum) / (RealMaximum - RealMinimum);
+                double value = Value, max = RealMaximum, min = RealMinimum;
 
-                if (realValue > RealMaximum)
-                    return RealMaximum;
+                //Clamp
+                value = (value > max) ? max :
+                        (value < min) ? min : value;
 
-                if (realValue < RealMinimum)
-                    return RealMinimum;
-
-                return realValue;
+                //Move into 0.0 - 1.0 scale
+                return (value - min) / (max - min);
             }
         }
 
         /// <summary>
-        /// Animate our Dial360 needle
+        /// Animates the needle to the current Value.
         /// </summary>
         protected void Animate()
         {
-            int angleRange = _maxAngle - _minAngle;
-
             //Calculate the needle position...
-            double angle = _minAngle + (NormalizedValue * angleRange);
+            double angle = _minAngle + (NormalizedValue * (_maxAngle - _minAngle));
 
+            //Update the animation
             _needleStoryboard.Stop(this);
 
-            _needleAnimation.From = _needleTransform.Angle;
+            _needleAnimation.From = _needleTransform.Angle; //Current angle of needle
             _needleAnimation.To = angle;
             _needleAnimation.Duration = AnimationDuration;
 
